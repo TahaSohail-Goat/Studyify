@@ -1,0 +1,8 @@
+# Dependencies — these are downloaded, never committed
+node_modules/
+
+# Secrets — never commit your real .env
+.env
+
+# Logs
+*.log
