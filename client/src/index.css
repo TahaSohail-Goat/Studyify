@@ -1,0 +1,10 @@
+/* Global styles — kept minimal for now */
+:root {
+  font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+  color: #111827;
+  background: #ffffff;
+}
+
+body {
+  margin: 0;
+}

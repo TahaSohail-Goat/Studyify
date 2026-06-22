@@ -1,0 +1,22 @@
+/* Simple, clean styles for our starter page */
+.App {
+  max-width: 640px;
+  margin: 4rem auto;
+  text-align: center;
+  font-family: system-ui, sans-serif;
+}
+
+.App h1 {
+  font-size: 3rem;
+  margin-bottom: 0.25rem;
+}
+
+.status-card {
+  margin-top: 2rem;
+  padding: 1.25rem 1.5rem;
+  border-radius: 12px;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  font-size: 1.05rem;
+  color: #111827;
+}
