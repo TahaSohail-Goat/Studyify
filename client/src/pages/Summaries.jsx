@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
   FileText, Sparkles, RotateCcw, Copy, Check, Trash2,
-  AlertCircle, Upload, ScrollText,
+  AlertCircle, Upload, ScrollText, Download, ChevronDown, FileSpreadsheet,
 } from "lucide-react";
 import AppLayout from "../components/AppLayout.jsx";
 import { getNotesApi } from "../api/notes.js";
@@ -35,6 +35,25 @@ export default function Summaries() {
   const [error, setError]                 = useState("");
   const [copiedId, setCopiedId]           = useState(null);
   const [confirmDelId, setConfirmDelId]   = useState(null);
+  const [menuId, setMenuId]               = useState(null); // summaryId whose download menu is open
+  const menuRef = useRef(null);
+
+  // Close the download menu on outside click or Escape.
+  useEffect(() => {
+    if (!menuId) return;
+    function onClick(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuId(null);
+    }
+    function onKey(e) {
+      if (e.key === "Escape") setMenuId(null);
+    }
+    document.addEventListener("mousedown", onClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [menuId]);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -82,6 +101,19 @@ export default function Summaries() {
       setError(err.message);
     } finally {
       setConfirmDelId(null);
+    }
+  }
+
+  // Lazy-load the (jsPDF-backed) download util only when the user actually downloads.
+  async function handleDownload(kind, summary, note) {
+    setMenuId(null);
+    try {
+      const util = await import("../utils/summaryDownload.js");
+      const data = { ...summary, noteName: summary.noteName || note.originalName };
+      if (kind === "pdf") util.downloadSummaryPdf(data);
+      else util.downloadSummaryCsv(data);
+    } catch {
+      setError("Couldn't prepare the download. Please try again.");
     }
   }
 
@@ -185,6 +217,40 @@ export default function Summaries() {
                         {copiedId === summary._id ? <Check size={14} /> : <Copy size={14} />}
                         {copiedId === summary._id ? "Copied" : "Copy"}
                       </button>
+
+                      <div
+                        className="summary-dl"
+                        ref={menuId === summary._id ? menuRef : null}
+                      >
+                        <button
+                          className="summary-action"
+                          onClick={() => setMenuId(menuId === summary._id ? null : summary._id)}
+                          aria-haspopup="menu"
+                          aria-expanded={menuId === summary._id}
+                        >
+                          <Download size={14} /> Download
+                          <ChevronDown size={13} style={{ opacity: 0.7 }} />
+                        </button>
+                        {menuId === summary._id && (
+                          <div className="summary-dl-menu" role="menu">
+                            <button
+                              className="summary-dl-item"
+                              role="menuitem"
+                              onClick={() => handleDownload("pdf", summary, note)}
+                            >
+                              <FileText size={15} /> Download as PDF
+                            </button>
+                            <button
+                              className="summary-dl-item"
+                              role="menuitem"
+                              onClick={() => handleDownload("csv", summary, note)}
+                            >
+                              <FileSpreadsheet size={15} /> Download as CSV
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
                       <button
                         className={`summary-action summary-action--danger${confirmDelId === summary._id ? " summary-action--confirm" : ""}`}
                         onClick={() => handleDelete(summary._id, note._id)}
