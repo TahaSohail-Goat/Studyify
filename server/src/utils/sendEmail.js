@@ -1,24 +1,10 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
-// Transporter is created inside the function (not at module scope) so that
-// process.env vars are guaranteed to be loaded by dotenv before we read them.
+const resend = new Resend(process.env.RESEND_API_KEY);
+
 export async function sendOtpEmail(toEmail, code) {
-  const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
-    family: 4, // force IPv4 — Railway free tier blocks IPv6 outbound
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 15000,
-  });
-
-  await transporter.sendMail({
-    from: `"Studify" <${process.env.EMAIL_USER}>`,
+  await resend.emails.send({
+    from: "Studify <onboarding@resend.dev>",
     to: toEmail,
     subject: "Your Studify verification code",
     html: `
